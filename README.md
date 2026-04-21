@@ -1,3 +1,3 @@
 # FlowerShop
 
-<img width="1018" height="578" alt="image" src="https://github.com/user-attachments/assets/0f03d2a4-fc64-4b23-8423-9313bc3393a7" />
+<img width="1022" height="632" alt="image" src="https://github.com/user-attachments/assets/424c0b2a-debc-4af9-a30d-0b1f83cba6f5" />
