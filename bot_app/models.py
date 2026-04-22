@@ -21,7 +21,11 @@ class TgUser(models.Model):
     
     def __str__(self):
         return f'{self.username} - @{self.telegram_id}'
-    
+
+    class Meta:
+        verbose_name = 'Пользователь Telegram'
+        verbose_name_plural = 'Пользователи Telegram'
+
 
 class Bouquet(models.Model):
     OCASSIONS = [
@@ -49,7 +53,11 @@ class Bouquet(models.Model):
     
     def __str__(self):
         return f'{self.name} - {self.price} - {self.in_stock}'
-    
+
+    class Meta:
+        verbose_name = 'Букет'
+        verbose_name_plural = 'Букеты'
+
     
 class Order(models.Model):
     STATUSES = [
@@ -88,11 +96,15 @@ class Order(models.Model):
         verbose_name='Статус',
     )
     amount = models.IntegerField(verbose_name='Сумма заказа')
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
 
     def __str__(self):
         return f'Заказ #{self.order_number} ({self.status})'
-    
+
+    class Meta:
+        verbose_name = 'Заказ'
+        verbose_name_plural = 'Заказы'
+
 
 class Employee(models.Model):
     CONDITIONS = [
@@ -125,4 +137,7 @@ class Employee(models.Model):
     
     def __str__(self):
         return f'{self.name} - {self.position} - {self.condition}'
-    
+
+    class Meta:
+        verbose_name = 'Сотрудник'
+        verbose_name_plural = 'Сотрудники'
