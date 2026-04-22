@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 
 class TgUser(models.Model):
@@ -144,3 +145,57 @@ class Employee(models.Model):
     class Meta:
         verbose_name = 'Сотрудник'
         verbose_name_plural = 'Сотрудники'
+
+
+class Consultation(models.Model):
+    STATUSES = [
+        ('new', 'Новая заявка'),
+        ('completed', 'Консультация проведена'),
+    ]
+    
+    user = models.ForeignKey(
+        TgUser,
+        on_delete=models.CASCADE,
+        verbose_name='Клиент',
+        related_name='consultations'
+    )
+    phone = models.CharField(
+        max_length=30,
+        verbose_name='Номер телефона'
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUSES,
+        default='new',
+        verbose_name='Статус'
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+    
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Дата закрытия'
+    )
+    
+    def save(self, *args, **kwargs):
+        if self.status == 'completed' and not self.completed_at:
+            self.completed_at = timezone.now()
+        super().save(*args, **kwargs)
+    
+    @property
+    def response_time(self):
+        if self.completed_at and self.created_at:
+            delta = self.completed_at - self.created_at
+            return int(delta.total_seconds() / 60)
+        return None
+    
+    def __str__(self):
+        return f'Заявка #{self.id} - {self.get_status_display()} - {self.created_at}'
+
+    class Meta:
+        verbose_name = 'Заявка на консультацию'
+        verbose_name_plural = 'Заявки на консультацию'
+        ordering = ['-created_at']
