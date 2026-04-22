@@ -60,7 +60,6 @@ def register_start_handler(bot: TeleBot):
             "Закажите доставку праздничного букета, собранного специально для ваших близких.\n\n"
             "К какому событию готовимся? Выберите вариант или укажите свой:"
         )
-<<<<<<< HEAD
         try:
             bot.send_message(message.chat.id, text, reply_markup=get_events_keyboard())
         except Exception as e:
@@ -74,8 +73,8 @@ def start_cmd(bot, message):
         "Добро пожаловать в FlowerShop!\n"
         "К какому событию готовимся?"
     )
-    bot.send_message(message.chat.id, text, reply_markup=get_events_keyboard())            
-=======
-        
+    try:
         bot.send_message(message.chat.id, text, reply_markup=get_events_keyboard())
->>>>>>> 6b03e6b0a07e048b37b0ee435a874894ce11b175
+    except Exception as e:
+        print(f"[START_CMD ERROR] {e}")           
+

@@ -20,7 +20,7 @@ def register_catalog_handler(bot: TeleBot):
 
         bouquets = get_all_bouquets()
         if not bouquets:
-            bot.send_message(chat_id, "📚 Каталог временно пуст.")
+            bot.send_message(chat_id, "Каталог временно пуст.")
             return
 
         # Сохраняем список всех букетов и начинаем с первого
@@ -96,14 +96,13 @@ def show_bouquet_with_nav(bot: TeleBot, message, chat_id: int, index: int):
     )
     combined_kb.add(InlineKeyboardButton("Главное меню", callback_data="nav:main"))
     
-    # ПЫТАЕМСЯ ОТПРАВИТЬ ФОТО
     try:
         # Импортируем модель для доступа к файлу
         from bot_app.models import Bouquet
         bouquet_obj = Bouquet.objects.get(id=bouquet["id"])
         
         if bouquet_obj.photo and os.path.exists(bouquet_obj.photo.path):
-            # Отправляем как ФАЙЛ (не URL!)
+
             with open(bouquet_obj.photo.path, 'rb') as photo_file:
                 bot.send_photo(
                     chat_id=chat_id,
@@ -118,6 +117,5 @@ def show_bouquet_with_nav(bot: TeleBot, message, chat_id: int, index: int):
             print(f"[WARN] Фото не найдено для букета ID={bouquet['id']}")
             
     except Exception as e:
-        # Если вообще не получилось — отправляем текст
         bot.send_message(chat_id, f"{caption}\n\nФото временно недоступно", reply_markup=combined_kb)
         print(f"[ERROR] Ошибка отправки фото: {e}")
