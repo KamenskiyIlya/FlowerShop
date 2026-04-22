@@ -9,7 +9,7 @@ class TgUser(models.Model):
     username = models.CharField(
         max_length=100,
         blank=True,
-        Null=True,
+        null=True,
         verbose_name='Имя пользователя',
     )
     phone = models.CharField(
@@ -54,7 +54,7 @@ class Bouquet(models.Model):
 class Order(models.Model):
     STATUSES = [
         ('new', 'Новый'),
-        ('delivered', 'Производится доставка'),
+        ('in_delivery', 'Производится доставка'),
         ('delivered', 'Доставлен'),
     ]
     
@@ -89,6 +89,9 @@ class Order(models.Model):
     )
     amount = models.IntegerField(verbose_name='Сумма заказа')
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'Заказ #{self.order_number} ({self.status})'
     
 
 class Employee(models.Model):
@@ -99,7 +102,7 @@ class Employee(models.Model):
     ]
     POSITIONS = [
         ('florist', 'Флорист'),
-        ('Courier', 'Курьер'),
+        ('courier', 'Курьер'),
     ]
     
     telegram_id = models.BigIntegerField(
