@@ -3,6 +3,7 @@ from telebot import TeleBot
 from telebot.types import Message, CallbackQuery
 from handlers.event_selection import user_data
 from services.order_service import create_order_from_bot_payload
+from services.notification_service import notify_courier_about_order
 
 # Множество для отслеживания уже обработанных заказов
 _processing_chats = set()
@@ -56,6 +57,7 @@ def register_order_handler(bot: TeleBot):
         }
 
         order = create_order_from_bot_payload(payload)
+        notify_courier_about_order(bot, order_data=order, payload=payload)
         bot.send_message(
             chat_id,
             f"Заказ принят! Номер заказа: #{order['order_number']}.\n"
