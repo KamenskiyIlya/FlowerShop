@@ -5,7 +5,7 @@
 """
 from telebot import TeleBot
 from telebot.types import CallbackQuery
-from services.mock_data import get_bouquet_by_filters
+from services.bouquet_service import get_bouquet_by_filters
 from handlers.bouquet_show import show_bouquet_card
 from handlers.event_selection import user_data
 
@@ -23,7 +23,7 @@ def register_budget_handler(bot: TeleBot):
         event = user_data[call.message.chat.id].get("event")
         budget = budget_value
         
-        # Подбор букета (пока из mock_data)
+        # Подбор букета из БД
         bouquet = get_bouquet_by_filters(event=event, budget=budget)
         
         if bouquet:

@@ -2,7 +2,7 @@
 from telebot import TeleBot
 from telebot.types import CallbackQuery
 from handlers.event_selection import user_data
-from services.mock_data import get_all_bouquets
+from services.bouquet_service import get_all_bouquets
 from handlers.bouquet_show import show_bouquet_card
 from random import choice
 
