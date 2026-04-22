@@ -2,6 +2,7 @@
 from telebot import TeleBot
 from telebot.types import Message, CallbackQuery
 from handlers.event_selection import user_data
+from services.order_service import create_order_from_bot_payload
 
 # Множество для отслеживания уже обработанных заказов
 _processing_chats = set()
@@ -43,9 +44,23 @@ def register_order_handler(bot: TeleBot):
         
         if chat_id not in user_data: user_data[chat_id] = {}
         user_data[chat_id]["datetime"] = message.text.strip()
-        
-        print(f"[ORDER] Заказ от {chat_id}: {user_data[chat_id]}")
-        bot.send_message(chat_id, "Заказ принят! Курьер свяжется с вами для уточнения деталей.")
+
+        payload = {
+            "telegram_id": chat_id,
+            "username": message.from_user.username if message.from_user else "",
+            "bouquet_id": user_data[chat_id].get("current_bouquet_id"),
+            "client_name": user_data[chat_id].get("client_name"),
+            "address": user_data[chat_id].get("address"),
+            "datetime": user_data[chat_id].get("datetime"),
+            "phone": user_data[chat_id].get("phone"),
+        }
+
+        order = create_order_from_bot_payload(payload)
+        bot.send_message(
+            chat_id,
+            f"Заказ принят! Номер заказа: #{order['order_number']}.\n"
+            f"Курьер свяжется с вами для уточнения деталей."
+        )
         
         # Очистка
         user_data.pop(chat_id, None)

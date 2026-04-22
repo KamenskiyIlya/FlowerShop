@@ -1,23 +1,5 @@
-import os
 import random
-import sys
-from pathlib import Path
-
-import django
-from django.apps import apps
-
-
-def _ensure_django() -> None:
-    if apps.ready:
-        return
-
-    project_root = Path(__file__).resolve().parents[2]
-    project_root_str = str(project_root)
-    if project_root_str not in sys.path:
-        sys.path.insert(0, project_root_str)
-
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "flower_shop.settings")
-    django.setup()
+from services.django_bootstrap import ensure_django
 
 
 def _normalize_event(event: str | None) -> str | None:
@@ -64,7 +46,7 @@ def _serialize_bouquet(bouquet) -> dict:
 
 
 def get_bouquet_by_filters(event: str | None, budget: str | None) -> dict | None:
-    _ensure_django()
+    ensure_django()
     from bot_app.models import Bouquet
 
     normalized_event = _normalize_event(event)
@@ -84,7 +66,7 @@ def get_bouquet_by_filters(event: str | None, budget: str | None) -> dict | None
 
 
 def get_all_bouquets() -> list[dict]:
-    _ensure_django()
+    ensure_django()
     from bot_app.models import Bouquet
 
     bouquets = Bouquet.objects.filter(in_stock=True).order_by("id")
