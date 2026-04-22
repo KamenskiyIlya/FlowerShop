@@ -14,3 +14,13 @@ def register_start_handler(bot: TeleBot):
             bot.send_message(message.chat.id, text, reply_markup=get_events_keyboard())
         except Exception as e:
             print(f"[START ERROR] {e}")
+
+
+def start_cmd(bot, message):
+    """Публичная функция для возврата в главное меню"""
+    from keyboards.events import get_events_keyboard
+    text = (
+        "Добро пожаловать в FlowerShop!\n"
+        "К какому событию готовимся?"
+    )
+    bot.send_message(message.chat.id, text, reply_markup=get_events_keyboard())            
