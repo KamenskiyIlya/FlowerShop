@@ -8,6 +8,7 @@ from handlers.order_flow import register_order_handler
 from handlers.consultation_flow import register_consultation_handler
 from handlers.catalog import register_catalog_handler
 
+
 def main():
     if not settings.BOT_TOKEN:
         print("Ошибка: BOT_TOKEN не найден в .env")
@@ -30,9 +31,10 @@ def main():
     print("FlowerShop Bot запущен...")
     try:
         bot.polling(none_stop=True, interval=1)
-    except Exception as e:
+    except Exception:
         print("Критическая ошибка:")
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     main()

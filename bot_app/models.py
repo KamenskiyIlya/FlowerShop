@@ -23,8 +23,8 @@ class TgUser(models.Model):
         return f'{self.username} - @{self.telegram_id}'
 
     class Meta:
-        verbose_name = 'Пользователь Telegram'
-        verbose_name_plural = 'Пользователи Telegram'
+        verbose_name = 'Клиент в Telegram'
+        verbose_name_plural = 'Клиенты в Telegram'
 
 
 class Bouquet(models.Model):
@@ -96,7 +96,10 @@ class Order(models.Model):
         verbose_name='Статус',
     )
     amount = models.IntegerField(verbose_name='Сумма заказа')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
 
     def __str__(self):
         return f'Заказ #{self.order_number} ({self.status})'
