@@ -28,7 +28,7 @@ class TgUser(models.Model):
 
 
 class Bouquet(models.Model):
-    OCASSIONS = [
+    OCCASIONS = [
         ('birthday', 'День рождения'),
         ('wedding', 'Свадьба'),
         ('school', 'В школу'),
@@ -37,9 +37,9 @@ class Bouquet(models.Model):
     ]
     
     name = models.CharField(max_length=50, verbose_name='Название')
-    ocassion = models.CharField(
+    occasion = models.CharField(
         max_length=50,
-        choices=OCASSIONS,
+        choices=OCCASIONS,
         verbose_name='Повод'    
     )
     photo = models.ImageField(
@@ -47,7 +47,7 @@ class Bouquet(models.Model):
         verbose_name='Фото',
     )
     meaning = models.TextField(verbose_name='Значение букета')
-    composistion = models.TextField(verbose_name='Состав')
+    composition = models.TextField(verbose_name='Состав')
     price = models.IntegerField(verbose_name='Цена')
     in_stock = models.BooleanField(default=True, verbose_name='В наличии')
     

@@ -43,7 +43,7 @@ def register_start_handler(bot: TeleBot):
                     text_without_doc,
                     parse_mode='Markdown'
                 )
-        except Exeption as e:
+        except Exception as e:
             print(f'[START ERROR] Не удалось отправить согласие: {e}')
             bot.send_message(
                 chat_id,

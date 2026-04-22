@@ -10,9 +10,9 @@ class TgUserAdmin(admin.ModelAdmin):
 
 @admin.register(Bouquet)
 class BouquetAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'ocassion', 'price', 'in_stock')
-    list_filter = ('ocassion', 'in_stock')
-    search_fields = ('name', 'composistion')
+    list_display = ('id', 'name', 'occasion', 'price', 'in_stock')
+    list_filter = ('occasion', 'in_stock')
+    search_fields = ('name', 'composition')
 
 
 @admin.register(Order)

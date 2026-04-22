@@ -11,7 +11,7 @@ sys.path.append(BASE_DIR)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'flower_shop.settings')
 django.setup()
 
-from django.conf import settings as django_settings
+from django.conf import settings as django_settings  # noqa: E402
 
 
 MEDIA_ROOT = django_settings.MEDIA_ROOT
