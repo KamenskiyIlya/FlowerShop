@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Bouquet, Employee, Order, TgUser
+from .models import Bouquet, Employee, Order, TgUser, Consultation
 
 
 @admin.register(TgUser)
@@ -10,9 +10,9 @@ class TgUserAdmin(admin.ModelAdmin):
 
 @admin.register(Bouquet)
 class BouquetAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'ocassion', 'price', 'in_stock')
-    list_filter = ('ocassion', 'in_stock')
-    search_fields = ('name', 'composistion')
+    list_display = ('id', 'name', 'occasion', 'price', 'in_stock')
+    list_filter = ('occasion', 'in_stock')
+    search_fields = ('name', 'composition')
 
 
 @admin.register(Order)
@@ -30,3 +30,32 @@ class EmployeeAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'position', 'condition', 'telegram_id', 'phone')
     list_filter = ('position', 'condition')
     search_fields = ('name', 'phone', 'telegram_id')
+    
+    
+@admin.register(Consultation)
+class ConsultationAdmin(admin.ModelAdmin):
+    list_display = (
+        'id', 
+        'user_info', 
+        'phone', 
+        'status', 
+        'created_at', 
+        'completed_at',
+        'response_time_display'
+    )
+    list_filter = ('status', 'created_at')
+    readonly_fields = ('created_at', 'completed_at', 'response_time_display')
+    search_fields = ('user__username', 'user__telegram_id', 'phone')
+    
+    def user_info(self, obj):
+        username = obj.user.username
+        return f'@{username} (ID: {obj.user.telegram_id})'
+    user_info.short_description = 'Пользователь'
+    
+    def response_time_display(self, obj):
+        if obj.response_time:
+            hours = obj.response_time // 60
+            minutes = obj.response_time % 60
+            return f'{hours} ч. {minutes} мин.'
+        return '-'
+    response_time_display.short_description = 'Время ответа'
