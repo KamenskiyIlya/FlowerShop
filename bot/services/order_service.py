@@ -53,6 +53,9 @@ def create_order_from_bot_payload(payload: dict) -> dict:
     client_name = (payload.get("client_name") or "").strip()
     address = (payload.get("address") or "").strip()
     raw_datetime = payload.get("datetime") or ""
+    final_amount = payload.get("final_amount", 0)
+    discount = payload.get("discount", 0)
+    promo_code = payload.get("promo_code")
 
     user = upsert_tg_user(
         telegram_id=telegram_id,
@@ -62,9 +65,17 @@ def create_order_from_bot_payload(payload: dict) -> dict:
     )
 
     bouquet = Bouquet.objects.filter(id=bouquet_id).first()
-    amount = bouquet.price if bouquet else 0
     delivery_date, delivery_time = _parse_delivery_datetime(raw_datetime)
     order_number = _build_order_number(Order)
+    
+    if final_amount > 0:
+        amount = final_amount
+    else:
+        if bouquet:
+            amount = bouquet.price
+        else:
+            amount = 0
+
 
     order = Order.objects.create(
         order_number=order_number,

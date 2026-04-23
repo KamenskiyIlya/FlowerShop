@@ -4,8 +4,11 @@ from telebot.types import Message, CallbackQuery
 from handlers.event_selection import user_data
 from handlers.start import start_cmd, is_main_menu_text
 from keyboards.common import get_main_menu_reply_keyboard
+from keyboards.promo import get_promo_keyboard
 from services.order_service import create_order_from_bot_payload
 from services.notification_service import notify_courier_about_order
+from services.promo_service import apply_promo_code
+from services.django_bootstrap import ensure_django
 
 # Множество для отслеживания уже обработанных заказов
 _processing_chats = set()
@@ -71,6 +74,89 @@ def register_order_handler(bot: TeleBot):
         
         if chat_id not in user_data: user_data[chat_id] = {}
         user_data[chat_id]["datetime"] = message.text.strip()
+        
+        ensure_django()
+        from bot_app.models import Bouquet
+        
+        bouquet_id = user_data[chat_id].get('current_bouquet_id')
+        bouquet = Bouquet.objects.filter(id=bouquet_id).first()
+        if bouquet:
+            amount = bouquet.price
+        else:
+            amount = 0
+        user_data[chat_id]['amount'] = amount
+        
+        bot.send_message(
+            chat_id,
+            f'Сумма заказа: {amount} руб.\n\nУ вас есть промокод на скидку?',
+            reply_markup=get_promo_keyboard()
+        )
+
+    @bot.callback_query_handler(func=lambda call: call.data == 'promo:yes')
+    def handle_promo_yes(call: CallbackQuery):
+        bot.answer_callback_query(call.id)
+        chat_id = call.message.chat.id
+        
+        bot.edit_message_text(
+            'Введите промокод:',
+            chat_id=chat_id,
+            message_id=call.message.message_id
+        )
+
+        bot.register_next_step_handler(call.message, apply_promo)
+        
+    def apply_promo(message: Message):
+        chat_id = message.chat.id
+        
+        
+        if is_main_menu_text(message.text):
+            user_data.pop(chat_id, None)
+            _processing_chats.discard(chat_id)
+            start_cmd(bot, message)
+            return
+        
+        promo_code = message.text
+        amount = user_data[chat_id].get('amount', 0)
+        
+        result = apply_promo_code(promo_code, amount)
+        
+        if result['success']:
+            user_data[chat_id]['promo_code'] = promo_code
+            user_data[chat_id]['discount'] = result['discount']
+            user_data[chat_id]['final_amount'] = result['final_amount']
+            bot.send_message(
+                chat_id,
+                f'{result['message']}\n\n'
+                f'Сумма заказа: {amount} руб.\n'
+                f'Скидка: {result['discount']} руб.\n'
+                f'Итого: {result['final_amount']} руб.'
+            )
+        else:
+            bot.send_message(chat_id, result['message'])
+            user_data[chat_id]['final_amount'] = amount
+            user_data[chat_id]['discount'] = 0
+            
+        finalize_order(message)
+        
+    @bot.callback_query_handler(func=lambda call: call.data == 'promo:no')
+    def handle_promo_no(call: CallbackQuery):
+        bot.answer_callback_query(call.id)
+        chat_id = call.message.chat.id
+        
+        bot.edit_message_text(
+            'Продолжаем без промокода.',
+            chat_id=chat_id,
+            message_id=call.message.message_id
+        )
+        
+        user_data[chat_id]['final_amount'] = user_data[chat_id].get('amount', 0)
+        user_data[chat_id]['discount'] = 0
+        user_data[chat_id]['promo_code'] = None
+        
+        finalize_order(call.message)
+        
+    def finalize_order(message: Message):
+        chat_id = message.chat.id
 
         payload = {
             "telegram_id": chat_id,
@@ -80,15 +166,28 @@ def register_order_handler(bot: TeleBot):
             "address": user_data[chat_id].get("address"),
             "datetime": user_data[chat_id].get("datetime"),
             "phone": user_data[chat_id].get("phone"),
+            "promo_code": user_data[chat_id].get("promo_code"),
+            "discount": user_data[chat_id].get("discount", 0),
+            "final_amount": user_data[chat_id].get(
+                "final_amount",
+                user_data[chat_id].get("amount", 0)
+            )
         }
-
+        
         order = create_order_from_bot_payload(payload)
         notify_courier_about_order(bot, order_data=order, payload=payload)
-        bot.send_message(
-            chat_id,
-            f"Заказ принят! Номер заказа: #{order['order_number']}.\n"
-            f"Курьер свяжется с вами для уточнения деталей."
-        )
+        
+        discount = user_data[chat_id].get("discount", 0)
+        final_amount = user_data[chat_id].get("final_amount", order['amount'])
+        
+        text = f"Заказ принят! Номер заказа: #{order['order_number']}.\n"
+        if discount > 0:
+            text += f'Итого к оплате: {final_amount} руб. (скидка {discount} руб.)\n\n'
+        else:
+            text += f'Итого к оплате: {final_amount} руб.\n\n'
+        text += "Курьер свяжется с вами для уточнения деталей."
+        
+        bot.send_message(chat_id, text)
         
         # Очистка
         user_data.pop(chat_id, None)
