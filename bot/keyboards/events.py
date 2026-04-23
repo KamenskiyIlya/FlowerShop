@@ -3,6 +3,7 @@
 Используется на первом шаге после приветствия.
 """
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from keyboards.common import MAIN_MENU_TEXT, MAIN_MENU_CALLBACK
 
 
 def get_events_keyboard() -> InlineKeyboardMarkup:
@@ -26,5 +27,6 @@ def get_events_keyboard() -> InlineKeyboardMarkup:
         InlineKeyboardButton("Без повода", callback_data="event:none"),
         InlineKeyboardButton("Другой повод", callback_data="event:other")
     )
+    keyboard.add(InlineKeyboardButton(MAIN_MENU_TEXT, callback_data=MAIN_MENU_CALLBACK))
     
     return keyboard

@@ -1,12 +1,13 @@
 import telebot
 import traceback
 from config.settings import settings
-from handlers.start import register_start_handler
+from handlers.start import register_start_handler, start_cmd
 from handlers.event_selection import register_event_handler
 from handlers.budget_selection import register_budget_handler
 from handlers.order_flow import register_order_handler
 from handlers.consultation_flow import register_consultation_handler
 from handlers.catalog import register_catalog_handler
+from keyboards.common import MAIN_MENU_TEXT
 
 
 def main():
@@ -22,6 +23,10 @@ def main():
     register_order_handler(bot)
     register_consultation_handler(bot)
     register_catalog_handler(bot)
+
+    @bot.message_handler(func=lambda m: (m.text or "").strip().lower() == MAIN_MENU_TEXT.lower())
+    def main_menu_text(message):
+        start_cmd(bot, message)
 
     # Ловим неизвестные команды, чтобы бот не падал
     @bot.message_handler(func=lambda m: True)

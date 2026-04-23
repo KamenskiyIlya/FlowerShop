@@ -1,7 +1,8 @@
 import os
 from telebot import TeleBot
-from telebot.types import Message
+from telebot.types import Message, CallbackQuery
 from keyboards.events import get_events_keyboard
+from keyboards.common import MAIN_MENU_CALLBACK, MAIN_MENU_TEXT
 from config.settings import MEDIA_ROOT
 
 
@@ -52,6 +53,13 @@ def register_start_handler(bot: TeleBot):
             )
             
         show_main_menu(bot, message)
+
+    @bot.callback_query_handler(func=lambda call: call.data == MAIN_MENU_CALLBACK)
+    def callback_main_menu(call: CallbackQuery):
+        bot.answer_callback_query(call.id)
+        from handlers.event_selection import user_data
+        user_data.pop(call.message.chat.id, None)
+        start_cmd(bot, call.message)
         
     
     def show_main_menu(bot: TeleBot, message: Message):
@@ -77,4 +85,8 @@ def start_cmd(bot, message):
         bot.send_message(message.chat.id, text, reply_markup=get_events_keyboard())
     except Exception as e:
         print(f"[START_CMD ERROR] {e}")           
+
+
+def is_main_menu_text(text: str | None) -> bool:
+    return (text or "").strip().lower() == MAIN_MENU_TEXT.lower()
 

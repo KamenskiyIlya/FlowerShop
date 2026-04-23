@@ -3,6 +3,7 @@
 Показывается под карточкой букета.
 """
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from keyboards.common import MAIN_MENU_TEXT, MAIN_MENU_CALLBACK
 
 
 def get_bouquet_actions_keyboard() -> InlineKeyboardMarkup:
@@ -24,6 +25,7 @@ def get_bouquet_actions_keyboard() -> InlineKeyboardMarkup:
         InlineKeyboardButton("Заказать консультацию", callback_data="action:consult"),
         InlineKeyboardButton("Посмотреть всю коллекцию", callback_data="action:catalog")
     )
+    keyboard.add(InlineKeyboardButton(MAIN_MENU_TEXT, callback_data=MAIN_MENU_CALLBACK))
     
     return keyboard
 

@@ -1,6 +1,8 @@
 from telebot import TeleBot
 from telebot.types import CallbackQuery, Message
 from keyboards.budgets import get_budget_keyboard
+from keyboards.common import get_main_menu_reply_keyboard
+from handlers.start import start_cmd, is_main_menu_text
 
 # Глобальное хранилище сессий
 user_data = {}
@@ -16,13 +18,20 @@ def register_event_handler(bot: TeleBot):
             user_data[call.message.chat.id] = {}
             
         if event_key == "other":
-            msg = bot.send_message(call.message.chat.id, "Напишите, какой у вас повод:")
+            msg = bot.send_message(
+                call.message.chat.id,
+                "Напишите, какой у вас повод:",
+                reply_markup=get_main_menu_reply_keyboard(),
+            )
             bot.register_next_step_handler(msg, save_custom_event)
         else:
             user_data[call.message.chat.id]["event"] = event_key
             ask_budget(call.message)
 
     def save_custom_event(message: Message):
+        if is_main_menu_text(message.text):
+            start_cmd(bot, message)
+            return
         if message.chat.id not in user_data:
             user_data[message.chat.id] = {}
         user_data[message.chat.id]["event"] = message.text.strip()

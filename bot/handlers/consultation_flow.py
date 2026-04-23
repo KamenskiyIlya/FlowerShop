@@ -2,6 +2,8 @@
 from telebot import TeleBot
 from telebot.types import Message, CallbackQuery
 from handlers.event_selection import user_data
+from handlers.start import start_cmd, is_main_menu_text
+from keyboards.common import get_main_menu_reply_keyboard
 from services.notification_service import notify_florist_about_consultation
 from services.consultation_service import create_consultation_from_bot_payload
 
@@ -11,12 +13,18 @@ def register_consultation_handler(bot: TeleBot):
         bot.answer_callback_query(call.id)
         msg = bot.send_message(
             call.message.chat.id, 
-            "Укажите номер телефона, и флорист перезвонит в течение 20 минут:"
+            "Укажите номер телефона, и флорист перезвонит в течение 20 минут:",
+            reply_markup=get_main_menu_reply_keyboard(),
         )
         bot.register_next_step_handler(msg, collect_phone)
 
     def collect_phone(message: Message):
         chat_id = message.chat.id
+
+        if is_main_menu_text(message.text):
+            user_data.pop(chat_id, None)
+            start_cmd(bot, message)
+            return
         
         # Инициализируем, если сессия пуста
         if chat_id not in user_data:

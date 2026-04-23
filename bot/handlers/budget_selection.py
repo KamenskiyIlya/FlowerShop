@@ -8,6 +8,7 @@ from telebot.types import CallbackQuery
 from services.bouquet_service import get_bouquet_by_filters
 from handlers.bouquet_show import show_bouquet_card
 from handlers.event_selection import user_data
+from keyboards.common import get_main_menu_inline_keyboard
 
 def register_budget_handler(bot: TeleBot):
     """Регистрирует обработчики выбора бюджета"""
@@ -32,5 +33,6 @@ def register_budget_handler(bot: TeleBot):
             bot.send_message(
                 call.message.chat.id,
                 "Подходящих букетов не нашлось.\n\n"
-                "Попробуйте изменить критерии или закажите консультацию флориста."
+                "Попробуйте изменить критерии или закажите консультацию флориста.",
+                reply_markup=get_main_menu_inline_keyboard(),
             )

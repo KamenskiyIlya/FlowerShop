@@ -3,6 +3,7 @@
 Показывается после выбора повода.
 """
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from keyboards.common import MAIN_MENU_TEXT, MAIN_MENU_CALLBACK
 
 
 def get_budget_keyboard() -> InlineKeyboardMarkup:
@@ -25,5 +26,6 @@ def get_budget_keyboard() -> InlineKeyboardMarkup:
         InlineKeyboardButton("Больше", callback_data="budget:more"),
         InlineKeyboardButton("Не важно", callback_data="budget:any")
     )
+    keyboard.add(InlineKeyboardButton(MAIN_MENU_TEXT, callback_data=MAIN_MENU_CALLBACK))
     
     return keyboard

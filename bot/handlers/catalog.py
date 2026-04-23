@@ -2,6 +2,7 @@ from telebot import TeleBot
 from telebot.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from handlers.event_selection import user_data
 from services.bouquet_service import get_all_bouquets
+from keyboards.common import MAIN_MENU_CALLBACK, MAIN_MENU_TEXT, get_main_menu_inline_keyboard
 
 
 import os
@@ -20,7 +21,7 @@ def register_catalog_handler(bot: TeleBot):
 
         bouquets = get_all_bouquets()
         if not bouquets:
-            bot.send_message(chat_id, "Каталог временно пуст.")
+            bot.send_message(chat_id, "Каталог временно пуст.", reply_markup=get_main_menu_inline_keyboard())
             return
 
         # Сохраняем список всех букетов и начинаем с первого
@@ -36,13 +37,6 @@ def register_catalog_handler(bot: TeleBot):
         bot.answer_callback_query(call.id)
         chat_id = call.message.chat.id
         action = call.data.split(":")[1]
-        
-        # Кнопка "Главное меню"
-        if action == "main":
-            bot.delete_message(chat_id, call.message.message_id)
-            from handlers.start import start_cmd
-            start_cmd(bot, call.message)
-            return
         
         # Проверка, есть ли данные о каталоге
         if chat_id not in catalog_index:
@@ -94,7 +88,7 @@ def show_bouquet_with_nav(bot: TeleBot, message, chat_id: int, index: int):
         InlineKeyboardButton("Назад", callback_data="nav:prev"),
         InlineKeyboardButton("Вперед", callback_data="nav:next")
     )
-    combined_kb.add(InlineKeyboardButton("Главное меню", callback_data="nav:main"))
+    combined_kb.add(InlineKeyboardButton(MAIN_MENU_TEXT, callback_data=MAIN_MENU_CALLBACK))
     
     try:
         # Импортируем модель для доступа к файлу

@@ -2,6 +2,8 @@
 from telebot import TeleBot
 from telebot.types import Message, CallbackQuery
 from handlers.event_selection import user_data
+from handlers.start import start_cmd, is_main_menu_text
+from keyboards.common import get_main_menu_reply_keyboard
 from services.order_service import create_order_from_bot_payload
 from services.notification_service import notify_courier_about_order
 
@@ -20,23 +22,47 @@ def register_order_handler(bot: TeleBot):
             bot.send_message(chat_id, "Сначала выберите букет")
             return
             
-        msg = bot.send_message(chat_id, "Введите ваше имя:")
+        msg = bot.send_message(chat_id, "Введите ваше имя:", reply_markup=get_main_menu_reply_keyboard())
         bot.register_next_step_handler(msg, collect_name)
 
     def collect_name(message: Message):
+        if is_main_menu_text(message.text):
+            user_data.pop(message.chat.id, None)
+            _processing_chats.discard(message.chat.id)
+            start_cmd(bot, message)
+            return
         if message.chat.id not in user_data: user_data[message.chat.id] = {}
         user_data[message.chat.id]["client_name"] = message.text.strip()
-        msg = bot.send_message(message.chat.id, "Укажите адрес доставки:")
+        msg = bot.send_message(
+            message.chat.id,
+            "Укажите адрес доставки:",
+            reply_markup=get_main_menu_reply_keyboard(),
+        )
         bot.register_next_step_handler(msg, collect_address)
 
     def collect_address(message: Message):
+        if is_main_menu_text(message.text):
+            user_data.pop(message.chat.id, None)
+            _processing_chats.discard(message.chat.id)
+            start_cmd(bot, message)
+            return
         if message.chat.id not in user_data: user_data[message.chat.id] = {}
         user_data[message.chat.id]["address"] = message.text.strip()
-        msg = bot.send_message(message.chat.id, "Укажите дату и время доставки (например: 15.05 в 14:00):")
+        msg = bot.send_message(
+            message.chat.id,
+            "Укажите дату и время доставки (например: 15.05 в 14:00):",
+            reply_markup=get_main_menu_reply_keyboard(),
+        )
         bot.register_next_step_handler(msg, collect_datetime)
 
     def collect_datetime(message: Message):
         chat_id = message.chat.id
+
+        if is_main_menu_text(message.text):
+            user_data.pop(chat_id, None)
+            _processing_chats.discard(chat_id)
+            start_cmd(bot, message)
+            return
         
         # Защита от повторного срабатывания
         if chat_id in _processing_chats:
