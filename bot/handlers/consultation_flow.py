@@ -3,6 +3,7 @@ from telebot import TeleBot
 from telebot.types import Message, CallbackQuery
 from handlers.event_selection import user_data
 from services.notification_service import notify_florist_about_consultation
+from services.consultation_service import create_consultation_from_bot_payload
 
 def register_consultation_handler(bot: TeleBot):
     @bot.callback_query_handler(func=lambda call: call.data == "action:consult")
@@ -22,7 +23,18 @@ def register_consultation_handler(bot: TeleBot):
             user_data[chat_id] = {}
             
         user_data[chat_id]["phone"] = message.text.strip()
+        consultation = create_consultation_from_bot_payload(
+            {
+                "telegram_id": chat_id,
+                "username": message.from_user.username if message.from_user else "",
+                "phone": user_data[chat_id].get("phone"),
+                "event": user_data[chat_id].get("event"),
+                "budget": user_data[chat_id].get("budget"),
+                "bouquet_id": user_data[chat_id].get("current_bouquet_id"),
+            }
+        )
         consultation_data = {
+            "consultation_id": consultation["id"],
             "telegram_id": chat_id,
             "client_name": message.from_user.first_name if message.from_user else "",
             "phone": user_data[chat_id].get("phone"),

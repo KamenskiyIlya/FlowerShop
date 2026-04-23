@@ -150,7 +150,8 @@ class Employee(models.Model):
 class Consultation(models.Model):
     STATUSES = [
         ('new', 'Новая заявка'),
-        ('completed', 'Консультация проведена'),
+        ('in_progress', 'В работе'),
+        ('closed', 'Закрыта'),
     ]
     
     user = models.ForeignKey(
@@ -163,6 +164,34 @@ class Consultation(models.Model):
         max_length=30,
         verbose_name='Номер телефона'
     )
+    event = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        verbose_name='Повод'
+    )
+    budget = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True,
+        verbose_name='Бюджет'
+    )
+    initial_bouquet = models.ForeignKey(
+        Bouquet,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='consultations_initial',
+        verbose_name='Изначальный букет'
+    )
+    final_order = models.ForeignKey(
+        Order,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='consultations',
+        verbose_name='Итоговый заказ'
+    )
     status = models.CharField(
         max_length=20,
         choices=STATUSES,
@@ -174,21 +203,30 @@ class Consultation(models.Model):
         verbose_name='Дата создания'
     )
     
-    completed_at = models.DateTimeField(
+    started_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Дата начала работы'
+    )
+    
+    closed_at = models.DateTimeField(
         null=True,
         blank=True,
         verbose_name='Дата закрытия'
     )
     
     def save(self, *args, **kwargs):
-        if self.status == 'completed' and not self.completed_at:
-            self.completed_at = timezone.now()
+        now = timezone.now()
+        if self.status == 'in_progress' and not self.started_at:
+            self.started_at = now
+        if self.status == 'closed' and not self.closed_at:
+            self.closed_at = now
         super().save(*args, **kwargs)
     
     @property
     def response_time(self):
-        if self.completed_at and self.created_at:
-            delta = self.completed_at - self.created_at
+        if self.closed_at and self.created_at:
+            delta = self.closed_at - self.created_at
             return int(delta.total_seconds() / 60)
         return None
     

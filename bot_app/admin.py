@@ -38,14 +38,18 @@ class ConsultationAdmin(admin.ModelAdmin):
         'id', 
         'user_info', 
         'phone', 
+        'event',
+        'budget',
         'status', 
         'created_at', 
-        'completed_at',
+        'started_at',
+        'closed_at',
+        'final_order',
         'response_time_display'
     )
     list_filter = ('status', 'created_at')
-    readonly_fields = ('created_at', 'completed_at', 'response_time_display')
-    search_fields = ('user__username', 'user__telegram_id', 'phone')
+    readonly_fields = ('created_at', 'started_at', 'closed_at', 'response_time_display')
+    search_fields = ('user__username', 'user__telegram_id', 'phone', 'event')
     
     def user_info(self, obj):
         username = obj.user.username

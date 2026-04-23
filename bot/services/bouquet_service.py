@@ -40,7 +40,7 @@ def _serialize_bouquet(bouquet) -> dict:
         "id": bouquet.id,
         "photo": photo_value,
         "meaning": bouquet.meaning,
-        "composition": bouquet.composistion,
+        "composition": bouquet.composition,
         "price": bouquet.price,
     }
 
@@ -53,7 +53,7 @@ def get_bouquet_by_filters(event: str | None, budget: str | None) -> dict | None
     queryset = Bouquet.objects.filter(in_stock=True)
 
     if normalized_event in {"birthday", "wedding", "school", "no_reason", "other"}:
-        queryset = queryset.filter(ocassion=normalized_event)
+        queryset = queryset.filter(occasion=normalized_event)
 
     queryset = _apply_budget_filter(queryset, budget)
 

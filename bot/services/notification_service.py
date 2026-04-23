@@ -39,6 +39,7 @@ def notify_florist_about_consultation(bot, consultation_data: dict) -> bool:
     florist_id = settings.FLORIST_ID
     text = (
         "Новая заявка на консультацию.\n"
+        f"Заявка ID: {consultation_data.get('consultation_id') or 'не указан'}\n"
         f"Клиент: {consultation_data.get('client_name') or 'не указано'}\n"
         f"Телефон: {consultation_data.get('phone') or 'не указан'}\n"
         f"Telegram ID: {consultation_data.get('telegram_id') or 'не указан'}\n"
