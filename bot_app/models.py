@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 
 
 class TgUser(models.Model):
@@ -119,6 +120,7 @@ class Employee(models.Model):
     POSITIONS = [
         ('florist', 'Флорист'),
         ('courier', 'Курьер'),
+        ('director', 'Руководитель'),
     ]
     
     telegram_id = models.BigIntegerField(
@@ -138,6 +140,26 @@ class Employee(models.Model):
         choices=CONDITIONS,
         verbose_name='Состояние'
     )
+    
+    def clean(self):
+        """Проверка перед сохранением, чтобы исключить добавление второго руководителя"""
+        if self.position == 'director':
+            existing_director = (
+                Employee.objects
+                .filter(position='director')
+                .exclude(id=self.id)
+                .first()
+            )
+            
+            if existing_director:
+                raise ValidationError(
+                    f'Директор уже существует: {existing_director.name}. '
+                    'Может быть только один директор'
+                )
+                
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
     
     def __str__(self):
         return f'{self.name} - {self.position} - {self.condition}'

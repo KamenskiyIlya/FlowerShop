@@ -1,5 +1,4 @@
-from config.settings import settings
-
+from bot_app.models import Employee
 
 def _safe_send(bot, chat_id: int, text: str) -> bool:
     if not chat_id:
@@ -12,8 +11,25 @@ def _safe_send(bot, chat_id: int, text: str) -> bool:
         return False
 
 
-def notify_courier_about_order(bot, order_data: dict, payload: dict) -> bool:
-    courier_id = settings.COURIER_ID
+def notify_director(bot, text: str):
+    director = Employee.objects.filter(
+        position='director',
+        condition='work',
+    ).firts()
+    
+    if not director:
+        print("[NOTIFY] Внимание! Не найден активный директор для уведомления")
+        return
+    
+    _safe_send(bot, director.telegram_id, text)
+
+
+def notify_courier_about_order(bot, order_data: dict, payload: dict):
+    couriers = Employee.objects.filter(
+        position='courier',
+        condition='work',
+    )
+
     bouquet_id = payload.get("bouquet_id")
     client_name = payload.get("client_name") or "не указано"
     address = payload.get("address") or "не указан"
@@ -32,11 +48,26 @@ def notify_courier_about_order(bot, order_data: dict, payload: dict) -> bool:
         f"Адрес: {address}\n"
         f"Дата/время: {delivery_dt}"
     )
-    return _safe_send(bot, courier_id, text)
+    
+    if not couriers.exists():
+        print('[NOTIFY] Внимание! Нет активных курьеров для уведомления о заказе.')
+        notify_director(
+            bot,
+            f"Внимание! Нет активных курьеров для доставки заказа #{order_data['order_number']}."
+            f'\n\n{text}',
+        )
+        return 
+    
+    for courier in couriers:
+        _safe_send(bot, courier.telegram_id, text)
 
 
-def notify_florist_about_consultation(bot, consultation_data: dict) -> bool:
-    florist_id = settings.FLORIST_ID
+def notify_florist_about_consultation(bot, consultation_data: dict):
+    florists = Employee.objects.filter(
+        position='florist',
+        condition='work',
+    )
+    
     text = (
         "Новая заявка на консультацию.\n"
         f"Заявка ID: {consultation_data.get('consultation_id') or 'не указан'}\n"
@@ -47,4 +78,14 @@ def notify_florist_about_consultation(bot, consultation_data: dict) -> bool:
         f"Бюджет: {consultation_data.get('budget') or 'не указан'}\n"
         f"Текущий букет ID: {consultation_data.get('bouquet_id') or 'не указан'}"
     )
-    return _safe_send(bot, florist_id, text)
+    
+    if not florists.exists():
+        print('[NOTIFY] Внимание! Нет активных флористов для уведомления о консультации.')
+        notify_director(
+            bot,
+            'Внимание! Нет активных флористов для уведомления о консультации.',
+        )
+        return
+    
+    for florist in florists:
+        _safe_send(bot, florist.telegram_id, text)
