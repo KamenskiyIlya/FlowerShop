@@ -9,6 +9,7 @@ from services.bouquet_service import get_bouquet_by_filters
 from handlers.bouquet_show import show_bouquet_card
 from handlers.event_selection import user_data
 from keyboards.common import get_main_menu_inline_keyboard
+from handlers.catalog import catalog_index, show_bouquet_with_nav
 
 def register_budget_handler(bot: TeleBot):
     """Регистрирует обработчики выбора бюджета"""
@@ -17,22 +18,33 @@ def register_budget_handler(bot: TeleBot):
     def handle_budget_selection(call: CallbackQuery):
         bot.answer_callback_query(call.id)
         
-        # Извлекаем значение бюджета: "budget:1000" -> "1000"
         budget_value = call.data.split(":")[1]
-        user_data[call.message.chat.id]["budget"] = budget_value
+        chat_id = call.message.chat.id
         
-        event = user_data[call.message.chat.id].get("event")
-        budget = budget_value
+        if chat_id not in user_data:
+            user_data[chat_id] = {}
         
-        # Подбор букета из БД
-        bouquet = get_bouquet_by_filters(event=event, budget=budget)
+        user_data[chat_id]["budget"] = budget_value
+        event = user_data[chat_id].get("event")
         
-        if bouquet:
-            show_bouquet_card(bot, call.message, bouquet)
-        else:
+        # НОВОЕ: получаем СПИСОК подходящих букетов
+        from services.bouquet_service import get_bouquets_list_by_filters
+        bouquets = get_bouquets_list_by_filters(event=event, budget=budget_value)
+        
+        if not bouquets:
             bot.send_message(
-                call.message.chat.id,
+                chat_id,
                 "Подходящих букетов не нашлось.\n\n"
                 "Попробуйте изменить критерии или закажите консультацию флориста.",
                 reply_markup=get_main_menu_inline_keyboard(),
             )
+            return
+        
+        catalog_index[chat_id] = {
+            'bouquets': bouquets,
+            'index': 0,
+            'is_filtered': True  # Флаг, что это подборка по фильтрам
+        }
+        
+        # Показываем первый букет из списка с кнопками навигации
+        show_bouquet_with_nav(bot, call.message, chat_id, 0, is_filtered=True)

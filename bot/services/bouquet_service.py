@@ -71,3 +71,23 @@ def get_all_bouquets() -> list[dict]:
 
     bouquets = Bouquet.objects.filter(in_stock=True).order_by("id")
     return [_serialize_bouquet(bouquet) for bouquet in bouquets]
+
+
+def get_bouquets_list_by_filters(event: str | None, budget: str | None) -> list[dict]:
+    """
+    Возвращает СПИСОК всех букетов, подходящих под фильтры.
+    Для показа в режиме "подбор по критериям".
+    """
+    ensure_django()
+    from bot_app.models import Bouquet
+    
+    normalized_event = _normalize_event(event)
+    queryset = Bouquet.objects.filter(in_stock=True)
+    
+    if normalized_event in {"birthday", "wedding", "school", "no_reason", "other"}:
+        queryset = queryset.filter(occasion=normalized_event)
+    
+    queryset = _apply_budget_filter(queryset, budget)
+    
+    # Возвращаем список всех подходящих, отсортированный по ID
+    return [_serialize_bouquet(b) for b in queryset.order_by("id")]

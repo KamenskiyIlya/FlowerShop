@@ -59,7 +59,7 @@ def register_catalog_handler(bot: TeleBot):
         bot.delete_message(chat_id, call.message.message_id)
         show_bouquet_with_nav(bot, call.message, chat_id, index)
 
-def show_bouquet_with_nav(bot: TeleBot, message, chat_id: int, index: int):
+def show_bouquet_with_nav(bot: TeleBot, message, chat_id: int, index: int, is_filtered: bool = False):
     """Показывает букет с навигацией"""
     state = catalog_index[chat_id]
     bouquets = state['bouquets']
@@ -67,8 +67,11 @@ def show_bouquet_with_nav(bot: TeleBot, message, chat_id: int, index: int):
     
     # Сохраняем ID для заказа
     user_data[chat_id]["current_bouquet_id"] = bouquet.get("id")
+
+    filter_hint = "🔍 Подходящие букеты" if is_filtered else "Вся коллекция"
     
     caption = (
+        f"{filter_hint} • Букет {index + 1} из {len(bouquets)}\n\n"
         f"{bouquet['meaning']}\n\n"
         f"Состав: {bouquet['composition']}\n"
         f"Цена: {bouquet['price']} ₽\n\n"
