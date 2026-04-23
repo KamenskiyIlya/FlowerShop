@@ -54,8 +54,6 @@ def create_order_from_bot_payload(payload: dict) -> dict:
     address = (payload.get("address") or "").strip()
     raw_datetime = payload.get("datetime") or ""
     final_amount = payload.get("final_amount", 0)
-    discount = payload.get("discount", 0)
-    promo_code = payload.get("promo_code")
 
     user = upsert_tg_user(
         telegram_id=telegram_id,
