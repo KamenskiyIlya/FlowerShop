@@ -2,6 +2,7 @@ import re
 from datetime import datetime
 
 from services.django_bootstrap import ensure_django
+from services.user_service import upsert_tg_user
 
 
 def _parse_delivery_datetime(raw_value: str):
@@ -43,7 +44,7 @@ def _build_order_number(Order):
 def create_order_from_bot_payload(payload: dict) -> dict:
     ensure_django()
 
-    from bot_app.models import Bouquet, Order, TgUser
+    from bot_app.models import Bouquet, Order
 
     telegram_id = payload.get("telegram_id")
     username = payload.get("username") or ""
@@ -53,16 +54,12 @@ def create_order_from_bot_payload(payload: dict) -> dict:
     address = (payload.get("address") or "").strip()
     raw_datetime = payload.get("datetime") or ""
 
-    user, _ = TgUser.objects.get_or_create(
+    user = upsert_tg_user(
         telegram_id=telegram_id,
-        defaults={"username": username or client_name or f"user_{telegram_id}", "phone": phone},
+        username=username,
+        phone=phone,
+        fallback_name=client_name,
     )
-
-    if client_name and user.username != client_name:
-        user.username = client_name
-    if phone and user.phone != phone:
-        user.phone = phone
-    user.save(update_fields=["username", "phone"])
 
     bouquet = Bouquet.objects.filter(id=bouquet_id).first()
     amount = bouquet.price if bouquet else 0

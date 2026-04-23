@@ -4,6 +4,7 @@ from telebot.types import Message, CallbackQuery
 from keyboards.events import get_events_keyboard
 from keyboards.common import MAIN_MENU_CALLBACK, MAIN_MENU_TEXT
 from config.settings import MEDIA_ROOT
+from services.user_service import upsert_tg_user, build_telegram_display_name
 
 
 def register_start_handler(bot: TeleBot):
@@ -11,6 +12,14 @@ def register_start_handler(bot: TeleBot):
     @bot.message_handler(commands=['start'])
     def start_with_warning(message: Message):
         chat_id = message.chat.id
+        tg_user = message.from_user
+        if tg_user:
+            display_name = build_telegram_display_name(
+                username=tg_user.username,
+                first_name=tg_user.first_name,
+                last_name=tg_user.last_name,
+            )
+            upsert_tg_user(telegram_id=tg_user.id, username=display_name)
         warning_path = os.path.join(MEDIA_ROOT, 'pd_agreement.pdf')
         text = (
             '**Согласие на обработку персональных данных**\n\n'
