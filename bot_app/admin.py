@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Bouquet, Employee, Order, TgUser, Consultation
+from .models import Bouquet, Employee, Order, TgUser, Consultation, PromoCode
 
 
 @admin.register(TgUser)
@@ -67,3 +67,10 @@ class ConsultationAdmin(admin.ModelAdmin):
             return f'{hours} ч. {minutes} мин.'
         return '-'
     response_time_display.short_description = 'Время ответа'
+
+
+@admin.register(PromoCode)
+class PromoCodeAdmin(admin.ModelAdmin):
+        list_display = ('code', 'discount', 'is_active', 'valid_to')
+        list_filter = ('is_active',)
+        search_fields = ('code',)

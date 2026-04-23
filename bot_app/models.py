@@ -259,3 +259,40 @@ class Consultation(models.Model):
         verbose_name = 'Заявка на консультацию'
         verbose_name_plural = 'Заявки на консультацию'
         ordering = ['-created_at']
+
+
+class PromoCode(models.Model):
+    code = models.CharField(
+        max_length=20,
+        unique=True,
+        verbose_name='Промокод',
+    )
+    
+    discount = models.IntegerField(verbose_name='Скидка (в рублях)')
+    
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name='Активен'
+    )
+    
+    valid_to = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Дуйствует до',
+    )
+    
+    def __str__(self):
+        return f'{self.code} - {self.discount} руб.'
+    
+    @property
+    def is_valid(self) -> bool:
+        if not self.is_active:
+            return False
+        if self.valid_to and timezone.now() > self.valid_to:
+            return False
+        
+        return True
+    
+    class Meta:
+        verbose_name = 'Промокод'
+        verbose_name_plural = 'Промокоды'
