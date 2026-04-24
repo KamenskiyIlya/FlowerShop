@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.utils.html import format_html
 from .models import Bouquet, Employee, Order, TgUser, Consultation, PromoCode
 
 
@@ -11,10 +12,20 @@ class TgUserAdmin(admin.ModelAdmin):
 
 @admin.register(Bouquet)
 class BouquetAdmin(admin.ModelAdmin):
-    list_display = ('id', 'name', 'occasion', 'price', 'in_stock')
+    fields = ('name', 'photo', 'photo_preview', 'occasion', 'meaning', 'composition', 'price', 'in_stock')
+    list_display = ('id', 'name', 'photo_preview', 'occasion', 'price', 'in_stock')
     list_filter = ('occasion', 'in_stock')
     search_fields = ('name', 'composition')
     list_display_links = ('id', 'name')
+    readonly_fields = ('photo_preview',)
+    
+    def photo_preview(self, obj):
+        if obj.photo and obj.photo.name:    
+            return format_html(
+                '<img src="{}" width="100" height="100" style="object-fit: cover;" />',
+                obj.photo.url
+            )
+        return 'Нет фото'
 
 
 @admin.register(Order)
