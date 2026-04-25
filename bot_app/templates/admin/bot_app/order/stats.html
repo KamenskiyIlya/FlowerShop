@@ -1,0 +1,106 @@
+{% extends "admin/base_site.html" %}
+
+{% block breadcrumbs %}
+  <div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Главная</a>
+    &rsaquo; <a href="{% url 'admin:bot_app_order_changelist' %}">Заказы</a>
+    &rsaquo; Статистика заказов
+  </div>
+{% endblock %}
+
+{% block content %}
+  <h1>Статистика заказов</h1>
+
+  <div style="margin: 16px 0;">
+    <strong>Всего заказов:</strong> {{ total_orders }}<br>
+    <strong>Без назначенного курьера:</strong> {{ unassigned_orders }}
+  </div>
+
+  <h2>По статусам</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Статус</th>
+        <th>Количество</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in status_stats %}
+        <tr>
+          <td>{{ item.label }}</td>
+          <td>{{ item.total }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="2">Заказов пока нет</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2 style="margin-top: 24px;">По курьерам</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Курьер</th>
+        <th>Доставок</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for courier in couriers_stats %}
+        <tr>
+          <td>{{ courier.name }}</td>
+          <td>{{ courier.total_deliveries }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="2">Курьеры не добавлены</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2 style="margin-top: 24px;">Заказы</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>№ заказа</th>
+        <th>Клиент</th>
+        <th>Телефон</th>
+        <th>Статус</th>
+        <th>Адрес</th>
+        <th>Дата</th>
+        <th>Время</th>
+        <th>Курьер</th>
+        <th>Сумма</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for order in orders %}
+        <tr>
+          <td>
+            <a href="{% url 'admin:bot_app_order_change' order.id %}">{{ order.order_number }}</a>
+          </td>
+          <td>{{ order.user.username|default:"-" }}</td>
+          <td>{{ order.user.phone|default:"-" }}</td>
+          <td>{{ order.get_status_display }}</td>
+          <td>{{ order.address }}</td>
+          <td>{{ order.delivery_date }}</td>
+          <td>{{ order.delivery_time }}</td>
+          <td>
+            {% if order.courier %}
+              {{ order.courier.name }}
+            {% else %}
+              Не назначен
+            {% endif %}
+          </td>
+          <td>{{ order.amount }} ₽</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="9">Заказов пока нет</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

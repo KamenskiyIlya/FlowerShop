@@ -85,6 +85,15 @@ class Order(models.Model):
         verbose_name='Букет',
         related_name='bouquet_orders',
     )
+    courier = models.ForeignKey(
+        'Employee',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='Курьер',
+        related_name='assigned_orders',
+        limit_choices_to={'position': 'courier'},
+    )
     address = models.TextField(verbose_name='Адрес доставки')
     delivery_date = models.DateField(verbose_name='Дата доставки')
     delivery_time = models.CharField(

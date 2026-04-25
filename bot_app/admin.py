@@ -1,6 +1,10 @@
 from django.contrib import admin
+from django.db.models import Count
+from django.template.response import TemplateResponse
+from django.urls import path, reverse
 from django.utils.html import format_html
-from .models import Bouquet, Employee, Order, TgUser, Consultation, PromoCode
+
+from .models import Bouquet, Consultation, Employee, Order, PromoCode, TgUser
 
 
 @admin.register(TgUser)
@@ -30,18 +34,75 @@ class BouquetAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/bot_app/order/change_list.html'
     list_display = (
         'order_number',
         'user',
+        'courier',
         'created_at',
         'status',
         'delivery_date',
         'delivery_time',
- 
     )
-    list_filter = ('status', 'delivery_date', 'created_at')
+    list_filter = ('status', 'delivery_date', 'created_at', 'courier')
     search_fields = ('order_number', 'user__username', 'user__phone', 'address')
     list_display_links = ('order_number',)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                'stats/',
+                self.admin_site.admin_view(self.stats_view),
+                name='bot_app_order_stats',
+            ),
+        ]
+        return custom_urls + urls
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['order_stats_url'] = reverse('admin:bot_app_order_stats')
+        return super().changelist_view(request, extra_context=extra_context)
+
+    def stats_view(self, request):
+        orders = (
+            Order.objects
+            .select_related('user', 'courier', 'bouquet')
+            .order_by('-created_at')
+        )
+        status_map = dict(Order.STATUSES)
+        raw_status_stats = (
+            Order.objects
+            .values('status')
+            .annotate(total=Count('id'))
+            .order_by('status')
+        )
+        status_stats = [
+            {
+                'status': item['status'],
+                'label': status_map.get(item['status'], item['status']),
+                'total': item['total'],
+            }
+            for item in raw_status_stats
+        ]
+        couriers_stats = (
+            Employee.objects
+            .filter(position='courier')
+            .annotate(total_deliveries=Count('assigned_orders'))
+            .order_by('name')
+        )
+
+        context = dict(
+            self.admin_site.each_context(request),
+            title='Статистика заказов',
+            opts=self.model._meta,
+            orders=orders,
+            total_orders=orders.count(),
+            status_stats=status_stats,
+            couriers_stats=couriers_stats,
+            unassigned_orders=orders.filter(courier__isnull=True).count(),
+        )
+        return TemplateResponse(request, 'admin/bot_app/order/stats.html', context)
 
 
 @admin.register(Employee)
@@ -82,6 +143,6 @@ class ConsultationAdmin(admin.ModelAdmin):
 
 @admin.register(PromoCode)
 class PromoCodeAdmin(admin.ModelAdmin):
-        list_display = ('code', 'discount', 'is_active', 'valid_to')
-        list_filter = ('is_active',)
-        search_fields = ('code',)
+    list_display = ('code', 'discount', 'is_active', 'valid_to')
+    list_filter = ('is_active',)
+    search_fields = ('code',)
