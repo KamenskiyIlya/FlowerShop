@@ -6,6 +6,7 @@ from handlers.start import start_cmd, is_main_menu_text
 from keyboards.common import get_main_menu_reply_keyboard
 from services.notification_service import notify_florist_about_consultation
 from services.consultation_service import create_consultation_from_bot_payload
+from services.validators import validate_phone
 
 def register_consultation_handler(bot: TeleBot):
     @bot.callback_query_handler(func=lambda call: call.data == "action:consult")
@@ -25,12 +26,22 @@ def register_consultation_handler(bot: TeleBot):
             user_data.pop(chat_id, None)
             start_cmd(bot, message)
             return
-        
+
+        is_valid, phone_or_error = validate_phone(message.text)
+        if not is_valid:
+            msg = bot.send_message(
+                chat_id,
+                phone_or_error,
+                reply_markup=get_main_menu_reply_keyboard(),
+            )
+            bot.register_next_step_handler(msg, collect_phone)
+            return
+
         # Инициализируем, если сессия пуста
         if chat_id not in user_data:
             user_data[chat_id] = {}
-            
-        user_data[chat_id]["phone"] = message.text.strip()
+
+        user_data[chat_id]["phone"] = phone_or_error
         consultation = create_consultation_from_bot_payload(
             {
                 "telegram_id": chat_id,

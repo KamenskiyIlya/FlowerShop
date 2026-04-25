@@ -9,6 +9,7 @@ from services.order_service import create_order_from_bot_payload
 from services.notification_service import notify_courier_about_order
 from services.promo_service import apply_promo_code
 from services.django_bootstrap import ensure_django
+from services.validators import validate_address, validate_delivery_datetime
 
 # Множество для отслеживания уже обработанных заказов
 _processing_chats = set()
@@ -49,8 +50,17 @@ def register_order_handler(bot: TeleBot):
             _processing_chats.discard(message.chat.id)
             start_cmd(bot, message)
             return
+        is_valid, address_or_error = validate_address(message.text)
+        if not is_valid:
+            msg = bot.send_message(
+                message.chat.id,
+                address_or_error,
+                reply_markup=get_main_menu_reply_keyboard(),
+            )
+            bot.register_next_step_handler(msg, collect_address)
+            return
         if message.chat.id not in user_data: user_data[message.chat.id] = {}
-        user_data[message.chat.id]["address"] = message.text.strip()
+        user_data[message.chat.id]["address"] = address_or_error
         msg = bot.send_message(
             message.chat.id,
             "Укажите дату и время доставки (например: 15.05 в 14:00):",
@@ -66,14 +76,25 @@ def register_order_handler(bot: TeleBot):
             _processing_chats.discard(chat_id)
             start_cmd(bot, message)
             return
-        
+
         # Защита от повторного срабатывания
         if chat_id in _processing_chats:
             return
+
+        is_valid, datetime_or_error = validate_delivery_datetime(message.text)
+        if not is_valid:
+            msg = bot.send_message(
+                chat_id,
+                datetime_or_error,
+                reply_markup=get_main_menu_reply_keyboard(),
+            )
+            bot.register_next_step_handler(msg, collect_datetime)
+            return
+
         _processing_chats.add(chat_id)
-        
+
         if chat_id not in user_data: user_data[chat_id] = {}
-        user_data[chat_id]["datetime"] = message.text.strip()
+        user_data[chat_id]["datetime"] = datetime_or_error
         
         ensure_django()
         from bot_app.models import Bouquet
