@@ -115,6 +115,7 @@ class EmployeeAdmin(admin.ModelAdmin):
     
 @admin.register(Consultation)
 class ConsultationAdmin(admin.ModelAdmin):
+    change_list_template = 'admin/bot_app/consultation/change_list.html'
     list_display = (
         'id', 
         'user_info', 
@@ -126,9 +127,64 @@ class ConsultationAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'started_at', 'closed_at', 'response_time_display')
     search_fields = ('user__username', 'user__telegram_id', 'phone', 'event')
     list_display_links = ('id', 'user_info')
+
+    def get_urls(self):
+        urls = super().get_urls()
+        custom_urls = [
+            path(
+                'stats/',
+                self.admin_site.admin_view(self.stats_view),
+                name='bot_app_consultation_stats',
+            ),
+        ]
+        return custom_urls + urls
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        extra_context['consultation_stats_url'] = reverse('admin:bot_app_consultation_stats')
+        return super().changelist_view(request, extra_context=extra_context)
+
+    def stats_view(self, request):
+        consultations = (
+            Consultation.objects
+            .select_related('user', 'initial_bouquet', 'final_order')
+            .order_by('-created_at')
+        )
+        status_map = dict(Consultation.STATUSES)
+        raw_status_stats = (
+            Consultation.objects
+            .values('status')
+            .annotate(total=Count('id'))
+            .order_by('status')
+        )
+        status_stats = [
+            {
+                'status': item['status'],
+                'label': status_map.get(item['status'], item['status']),
+                'total': item['total'],
+            }
+            for item in raw_status_stats
+        ]
+
+        closed_with_response = [item.response_time for item in consultations if item.response_time is not None]
+        average_response_minutes = int(sum(closed_with_response) / len(closed_with_response)) if closed_with_response else None
+
+        context = dict(
+            self.admin_site.each_context(request),
+            title='Статистика консультаций',
+            opts=self.model._meta,
+            consultations=consultations,
+            total_consultations=consultations.count(),
+            status_stats=status_stats,
+            new_consultations=consultations.filter(status='new').count(),
+            in_progress_consultations=consultations.filter(status='in_progress').count(),
+            closed_consultations=consultations.filter(status='closed').count(),
+            average_response_minutes=average_response_minutes,
+        )
+        return TemplateResponse(request, 'admin/bot_app/consultation/stats.html', context)
     
     def user_info(self, obj):
-        username = obj.user.username
+        username = obj.user.username or 'без username'
         return f'@{username} (ID: {obj.user.telegram_id})'
     user_info.short_description = 'Пользователь'
     

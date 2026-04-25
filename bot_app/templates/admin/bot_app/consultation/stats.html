@@ -1,0 +1,102 @@
+{% extends "admin/base_site.html" %}
+
+{% block breadcrumbs %}
+  <div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Главная</a>
+    &rsaquo; <a href="{% url 'admin:bot_app_consultation_changelist' %}">Консультации</a>
+    &rsaquo; Статистика консультаций
+  </div>
+{% endblock %}
+
+{% block content %}
+  <h1>Статистика консультаций</h1>
+
+  <div style="margin: 16px 0;">
+    <strong>Всего консультаций:</strong> {{ total_consultations }}<br>
+    <strong>Новые:</strong> {{ new_consultations }}<br>
+    <strong>В работе:</strong> {{ in_progress_consultations }}<br>
+    <strong>Закрытые:</strong> {{ closed_consultations }}<br>
+    <strong>Среднее время ответа:</strong>
+    {% if average_response_minutes is not None %}
+      {{ average_response_minutes }} мин.
+    {% else %}
+      -
+    {% endif %}
+  </div>
+
+  <h2>По статусам</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Статус</th>
+        <th>Количество</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in status_stats %}
+        <tr>
+          <td>{{ item.label }}</td>
+          <td>{{ item.total }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="2">Заявок пока нет</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2 style="margin-top: 24px;">Консультации</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Клиент</th>
+        <th>Телефон</th>
+        <th>Статус</th>
+        <th>Повод</th>
+        <th>Бюджет</th>
+        <th>Создана</th>
+        <th>Закрыта</th>
+        <th>Время ответа</th>
+        <th>Итоговый заказ</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in consultations %}
+        <tr>
+          <td>
+            <a href="{% url 'admin:bot_app_consultation_change' item.id %}">{{ item.id }}</a>
+          </td>
+          <td>@{{ item.user.username|default:"без username" }} (ID: {{ item.user.telegram_id }})</td>
+          <td>{{ item.phone|default:"-" }}</td>
+          <td>{{ item.get_status_display }}</td>
+          <td>{{ item.event|default:"-" }}</td>
+          <td>{{ item.budget|default:"-" }}</td>
+          <td>{{ item.created_at }}</td>
+          <td>{{ item.closed_at|default:"-" }}</td>
+          <td>
+            {% if item.response_time is not None %}
+              {{ item.response_time }} мин.
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td>
+            {% if item.final_order %}
+              <a href="{% url 'admin:bot_app_order_change' item.final_order.id %}">
+                #{{ item.final_order.order_number }}
+              </a>
+            {% else %}
+              -
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="10">Консультаций пока нет</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}
