@@ -34,11 +34,13 @@ def main():
         bot.reply_to(message, "Используйте /start для начала работы 🌸")
 
     print("FlowerShop Bot запущен...")
-    try:
-        bot.polling(none_stop=True, interval=1)
-    except Exception:
-        print("Критическая ошибка:")
-        traceback.print_exc()
+    while True:
+        try:
+            bot.polling(none_stop=True, interval=1)
+        except Exception:
+            print("Критическая ошибка:")
+            traceback.print_exc()
+            print('\nПерезапуск бота...')
 
 
 if __name__ == "__main__":
